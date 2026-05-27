@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>澳洲技术移民分数工具 | Australia Migration Score Planner</title>
+    <meta
+      name="description"
+      content="中英双语澳洲技术移民 EOI 分数查询工具，支持职业参考分、加分建议和 PR 路径步骤。"
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="top-nav" aria-label="Primary navigation">
+        <a class="brand" href="#">
+          <span class="brand__mark">PR</span>
+          <span>
+            <strong>Migration Score Studio</strong>
+            <small>澳洲移民分数查询</small>
+          </span>
+        </a>
+        <div class="top-nav__links">
+          <a href="#calculator">Calculator</a>
+          <a href="#occupations">Occupations</a>
+          <a href="#invitation-trends">Trends</a>
+          <a href="#rules">Rules</a>
+        </div>
+      </nav>
+
+      <section class="hero">
+        <div class="hero__copy">
+          <span class="eyebrow">Australia skilled migration score tool / 澳洲技术移民分数工具</span>
+          <h1>选择专业和背景，查看你的 EOI 分数</h1>
+          <p>
+            选择专业/职业、年龄、学历、英语、工作经验和个人情况，实时查看个人 EOI 分数、
+            189/190/491 对比，以及该职业方向的参考竞争分区间。
+          </p>
+          <div class="hero__actions">
+            <a class="button button--primary" href="#calculator">计算分数</a>
+            <a class="button" href="#occupations">查看专业</a>
+            <a class="button" href="#rules">了解规则</a>
+          </div>
+          <div class="hero-metrics" aria-label="Key migration planning metrics">
+            <div>
+              <strong>65</strong>
+              <span>EOI minimum / 最低门槛</span>
+            </div>
+            <div>
+              <strong>11</strong>
+              <span>popular paths / 热门方向</span>
+            </div>
+            <div>
+              <strong>189/190/491</strong>
+              <span>visa comparison / 签证对比</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="score-card" aria-live="polite">
+          <div class="score-card__label">Live profile</div>
+          <div>
+            <p class="muted">Your EOI score / 你的 EOI 分数</p>
+            <strong id="heroScore" class="score-card__number">0</strong>
+          </div>
+          <div id="heroStatus" class="status status--neutral">Ready / 待填写</div>
+          <div class="score-card__grid">
+            <div>
+              <span>Occupation / 职业</span>
+              <strong id="heroOccupation">-</strong>
+            </div>
+            <div>
+              <span>Reference / 参考分</span>
+              <strong id="heroReference">-</strong>
+            </div>
+          </div>
+          <div class="mini-map" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </section>
+      </section>
+
+      <section class="source-strip">
+        <div>
+          <strong>Last checked / 最后核对：27 May 2026</strong>
+          <p>Educational planning only. Not migration advice. / 仅供学习规划，不构成移民建议。</p>
+        </div>
+        <div class="source-strip__links" id="topSources"></div>
+      </section>
+
+      <section id="calculator" class="section">
+        <div class="section__heading">
+          <span class="eyebrow">Score calculator / 分数计算器</span>
+          <h2>填写你的专业和个人背景</h2>
+          <p>选择会自动保存到浏览器本地。参考竞争分不是官方固定分数，只用于规划和对比。</p>
+        </div>
+
+        <div class="calculator-layout">
+          <section class="panel occupation-panel">
+            <div class="panel__header">
+              <div>
+                <h3>Major or occupation / 专业或职业</h3>
+                <p>点击卡片选择方向，不使用原生下拉菜单，移动端也不会被遮挡。</p>
+              </div>
+              <span id="occupationGroup" class="pill">-</span>
+            </div>
+            <div class="picker-toolbar">
+              <span>Choose your major / 选择专业方向</span>
+              <div id="occupationFilters" class="picker-filters" aria-label="Occupation groups"></div>
+            </div>
+            <div id="occupationPicker" class="occupation-picker" role="listbox" aria-label="Choose occupation"></div>
+            <div class="occupation-summary">
+              <div>
+                <span>ANZSCO</span>
+                <strong id="occupationAnzsco">-</strong>
+              </div>
+              <div>
+                <span>Assessment / 评估机构</span>
+                <strong id="occupationAuthority">-</strong>
+              </div>
+              <div>
+                <span>Reference / 参考竞争分</span>
+                <strong id="occupationRange">-</strong>
+              </div>
+            </div>
+            <p id="occupationRisk" class="warning"></p>
+          </section>
+
+          <aside class="panel result-panel">
+            <div class="result-panel__top">
+              <div>
+                <p class="muted">Personal EOI score / 个人 EOI 总分</p>
+                <strong id="totalScore" class="result-panel__score">0</strong>
+              </div>
+              <span id="statusBadge" class="status status--neutral">Ready</span>
+            </div>
+            <p id="statusText" class="status-copy"></p>
+            <div class="result-cards">
+              <div>
+                <span>Occupation reference / 职业参考分</span>
+                <strong id="referenceScore">-</strong>
+              </div>
+              <div>
+                <span>Gap to reference floor / 距参考下限</span>
+                <strong id="scoreGap">0</strong>
+              </div>
+            </div>
+            <div class="progress" aria-label="Score progress">
+              <span id="scoreProgress"></span>
+            </div>
+            <h4>Improve first / 优先提升</h4>
+            <ul id="adviceList" class="advice-list"></ul>
+          </aside>
+
+          <section class="panel panel--form form-panel-wide">
+            <div class="panel__header">
+              <div>
+                <h3>Your situation / 自身情况</h3>
+                <p>英语水平已放在选项列表上方，并显示 IELTS/PTE 对照。选择结果会实时体现在分数和按钮状态里。</p>
+              </div>
+              <div class="preset-actions">
+                <span id="studyStageBadge" class="pill">本科毕业</span>
+                <button id="currentPreset" class="button button--small" type="button">本科毕业</button>
+                <button id="futurePreset" class="button button--small" type="button">硕士毕业</button>
+              </div>
+            </div>
+            <form id="profileForm" class="form-grid"></form>
+          </section>
+
+          <section class="panel bonus-explain-panel">
+            <div class="panel__header">
+              <div>
+                <h3>Bonus item explanations / 加分项解释</h3>
+                <p>这些解释单独放在这里，不塞进选择按钮里，避免选项卡片变高或文字被挡住。</p>
+              </div>
+              <span class="pill">Special items</span>
+            </div>
+            <div id="bonusExplanations" class="bonus-explain-grid"></div>
+          </section>
+
+          <section class="panel boost-panel">
+            <div class="panel__header">
+              <div>
+                <h3>Point boost plan / 低于竞争分时怎么加分</h3>
+                <p>根据当前职业参考分和你的选择，列出最直接的提分方向。</p>
+              </div>
+              <span class="pill">Dynamic / 动态建议</span>
+            </div>
+            <div id="boostList" class="boost-list"></div>
+          </section>
+        </div>
+
+        <div class="charts-grid">
+          <section class="panel">
+            <h3>Points breakdown / 加分拆解</h3>
+            <div id="breakdownChart" class="bar-list"></div>
+          </section>
+          <section class="panel">
+            <h3>189 vs 190 vs 491 / 签证分数对比</h3>
+            <div id="visaChart" class="visa-chart"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="occupations" class="section">
+        <div class="section__heading">
+          <span class="eyebrow">Occupation explorer / 专业职业对比</span>
+          <h2>热门移民方向参考分</h2>
+          <p>点击职业名称可把它设为当前选择。表格覆盖工程/机器人/机电、IT、护理、会计和教师方向。</p>
+        </div>
+        <div class="panel">
+          <label class="search-box">
+            <span>Search / 搜索</span>
+            <input id="occupationSearch" type="search" placeholder="Search occupation, major, ANZSCO..." />
+          </label>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Occupation / 职业</th>
+                  <th>ANZSCO</th>
+                  <th>Related major / 相关专业</th>
+                  <th>Assessment / 评估机构</th>
+                  <th>Pathways</th>
+                  <th>Range / 参考分</th>
+                  <th>Risk / 风险</th>
+                </tr>
+              </thead>
+              <tbody id="occupationRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="invitation-trends" class="section">
+        <div class="section__heading">
+          <span class="eyebrow">Invitation trends / 邀请趋势</span>
+          <h2>近几年邀请分数、案例和专业容易度</h2>
+          <p>
+            Home Affairs 官方轮次通常公开每轮总邀请数和各职业最低邀请分；职业受邀人数这里使用
+            “估算/趋势”口径展示，用于规划对比，不等于官方保证。
+          </p>
+        </div>
+
+        <div class="trend-grid">
+          <section class="panel">
+            <div class="panel__header">
+              <div>
+                <h3>Recent SkillSelect rounds / 近年轮次</h3>
+                <p>官方公开的轮次总邀请数和最低分概览。</p>
+              </div>
+              <span class="pill">Official totals</span>
+            </div>
+            <div id="roundRows" class="round-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel__header">
+              <div>
+                <h3>Ease ranking / 移民容易度排序</h3>
+                <p>结合最低分、职业需求、估算邀请量和路径稳定性排序。</p>
+              </div>
+              <span class="pill">Relative</span>
+            </div>
+            <div id="easeRanking" class="ranking-list"></div>
+          </section>
+        </div>
+
+        <section class="panel trend-panel">
+          <div class="panel__header">
+            <div>
+              <h3>Occupation score and invite snapshot / 专业分数和受邀趋势</h3>
+              <p>“Est.” 为估算受邀人数，职业最低分来自公开邀请轮次汇总。</p>
+            </div>
+            <span class="pill">189 focus</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Occupation / 职业</th>
+                  <th>Latest score / 最近分数</th>
+                  <th>2024-2025 range</th>
+                  <th>Est. invites / 估算受邀</th>
+                  <th>Trend / 趋势</th>
+                  <th>Ease / 容易度</th>
+                </tr>
+              </thead>
+              <tbody id="trendRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel case-panel">
+          <div class="panel__header">
+            <div>
+              <h3>Invitation-style cases / 达到分数并受邀的案例画像</h3>
+              <p>案例是基于公开轮次分数构造的规划画像，用来说明“什么组合可能达到受邀线”。</p>
+            </div>
+            <span class="pill">Examples</span>
+          </div>
+          <div id="caseCards" class="case-grid"></div>
+        </section>
+      </section>
+
+      <section id="rules" class="section">
+        <div class="section__heading">
+          <span class="eyebrow">Rules / 规则解释</span>
+          <h2>怎样理解分数和签证路径？</h2>
+          <p>65 分只是 EOI 最低门槛，真正是否有竞争力还要看职业、评估、邀请轮次、州担保政策和个人材料。</p>
+        </div>
+        <div id="ruleCards" class="card-grid"></div>
+        <div class="section__heading section__heading--sub">
+          <span class="eyebrow">PR pathway steps / PR 路径步骤</span>
+          <h2>不同路径怎么走？</h2>
+          <p>下面是规划视角的步骤清单。真实申请前请按官方页面和州政府要求逐项核对。</p>
+        </div>
+        <div id="pathwaySteps" class="pathway-grid"></div>
+        <div id="visaCards" class="visa-grid"></div>
+      </section>
+
+      <section class="section">
+        <div class="section__heading">
+          <span class="eyebrow">Official sources / 官方来源</span>
+          <h2>核对信息的入口</h2>
+          <p>申请前请以 Home Affairs、SkillSelect、职业评估机构、州政府网站或注册移民代理意见为准。</p>
+        </div>
+        <div id="allSources" class="source-grid"></div>
+      </section>
+    </main>
+
+    <script src="./src/app.js"></script>
+  </body>
+</html>

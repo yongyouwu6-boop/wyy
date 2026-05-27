@@ -1,0 +1,11 @@
+{
+  "name": "australia-pr-pathway-planner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Plain static bilingual Australian skilled migration score checker.",
+  "scripts": {
+    "start": "python -m http.server 5173 --bind 127.0.0.1",
+    "preview": "python -m http.server 5173 --bind 127.0.0.1"
+  }
+}
