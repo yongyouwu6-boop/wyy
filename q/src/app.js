@@ -1,4 +1,4 @@
-const STORAGE_KEY = "australia-pr-score-profile-static-v2";
+const STORAGE_KEY = "australia-pr-score-profile-static-v3";
 let activeOccupationGroup = "All";
 
 const DATA = {
@@ -559,6 +559,22 @@ const DATA = {
       result: "匹配近年 95-100 的高竞争画像，但仍强依赖轮次和职业配额。"
     }
   ],
+  blankProfile: {
+    occupationId: "",
+    studyStage: "",
+    age: "",
+    english: "",
+    education: "",
+    overseasWork: "",
+    australianWork: "",
+    australianStudy: "",
+    specialistEducation: "",
+    regionalStudy: "",
+    communityLanguage: "",
+    professionalYear: "",
+    partner: "",
+    visaSubclass: ""
+  },
   defaultProfile: {
     occupationId: "mechatronics",
     studyStage: "bachelor",
@@ -602,9 +618,9 @@ function $(id) {
 function loadProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    return { ...DATA.defaultProfile, ...saved };
+    return { ...DATA.blankProfile, ...saved };
   } catch {
-    return { ...DATA.defaultProfile };
+    return { ...DATA.blankProfile };
   }
 }
 
@@ -613,23 +629,27 @@ function saveProfile() {
 }
 
 function getOccupation() {
-  return DATA.occupations.find((occupation) => occupation.id === profile.occupationId) || DATA.occupations[0];
+  return DATA.occupations.find((occupation) => occupation.id === profile.occupationId) || null;
 }
 
 function getOption(category, value) {
-  return category.options.find((option) => option.value === value) || category.options[0];
+  return category.options.find((option) => option.value === value) || null;
+}
+
+function hasCompleteProfile(activeProfile = profile) {
+  return Boolean(activeProfile.occupationId) && DATA.categories.every((category) => Boolean(activeProfile[category.id]));
 }
 
 function calculate(activeProfile = profile) {
   let eligible = true;
   const breakdown = DATA.categories.map((category) => {
     const option = getOption(category, activeProfile[category.id]);
-    if (option.points === null) eligible = false;
+    if (option?.points === null) eligible = false;
     return {
       id: category.id,
       label: category.label,
-      selected: option.label,
-      points: option.points || 0
+      selected: option?.label || "Not selected / 未选择",
+      points: option?.points || 0
     };
   });
   return {
@@ -701,7 +721,9 @@ function renderOccupationSelect() {
   const groups = [...new Set(DATA.occupations.map((occupation) => occupation.group))];
   const filters = ["All", ...groups];
   const currentOccupation = getOccupation();
-  if (activeOccupationGroup !== "All" && !groups.includes(activeOccupationGroup)) activeOccupationGroup = currentOccupation.group;
+  if (activeOccupationGroup !== "All" && !groups.includes(activeOccupationGroup)) {
+    activeOccupationGroup = currentOccupation?.group || "All";
+  }
 
   $("occupationFilters").innerHTML = filters
     .map((group) => {
@@ -800,7 +822,8 @@ function renderForm() {
 
 function renderBreakdown(breakdown) {
   const positive = breakdown.filter((item) => item.points > 0);
-  $("breakdownChart").innerHTML = positive
+  $("breakdownChart").innerHTML = positive.length
+    ? positive
     .map((item) => {
       const width = Math.min(100, (item.points / 30) * 100);
       return `
@@ -811,10 +834,16 @@ function renderBreakdown(breakdown) {
         </div>
       `;
     })
-    .join("");
+    .join("")
+    : `<div class="empty-state">完成选择后会显示各项加分拆解。</div>`;
 }
 
-function renderVisaChart() {
+function renderVisaChart(ready = true) {
+  if (!ready) {
+    $("visaChart").innerHTML = `<div class="empty-state">完成选择后会显示 189 / 190 / 491 对比分数。</div>`;
+    return;
+  }
+
   $("visaChart").innerHTML = ["189", "190", "491"]
     .map((visa) => {
       const score = calculate({ ...profile, visaSubclass: visa }).total;
@@ -1002,48 +1031,58 @@ function renderPathwaySteps() {
 
 function syncPresetButtons() {
   const isMaster = profile.education === "master" || profile.studyStage === "master";
-  $("studyStageBadge").textContent = isMaster ? "硕士毕业" : "本科毕业";
-  $("currentPreset").classList.toggle("is-active", !isMaster);
+  const hasStudyStage = profile.studyStage === "bachelor" || profile.studyStage === "master";
+  $("studyStageBadge").textContent = hasStudyStage ? (isMaster ? "硕士毕业" : "本科毕业") : "未选择";
+  $("currentPreset").classList.toggle("is-active", hasStudyStage && !isMaster);
   $("futurePreset").classList.toggle("is-active", isMaster);
 }
 
 function render() {
   const occupation = getOccupation();
   const result = calculate();
-  const [statusText, statusShort, tone] = getStatus(result.total, result.eligible, occupation);
-  const gap = Math.max(0, occupation.targetMin - result.total);
+  const ready = hasCompleteProfile();
+  const [statusText, statusShort, tone] = ready
+    ? getStatus(result.total, result.eligible, occupation)
+    : ["Select a major and complete your profile / 请选择专业并填写自身情况", "Waiting", "neutral"];
+  const gap = ready ? Math.max(0, occupation.targetMin - result.total) : "-";
   const statusClass = `status status--${tone}`;
 
-  $("heroScore").textContent = result.total;
-  $("heroOccupation").textContent = occupation.title;
-  $("heroReference").textContent = occupation.range;
+  $("heroScore").textContent = ready ? result.total : "—";
+  $("heroOccupation").textContent = occupation?.title || "-";
+  $("heroReference").textContent = occupation?.range || "-";
   $("heroStatus").className = statusClass;
   $("heroStatus").textContent = statusText;
 
-  $("occupationGroup").textContent = occupation.group;
-  $("occupationAnzsco").textContent = occupation.anzsco;
-  $("occupationAuthority").textContent = occupation.authority;
-  $("occupationRange").textContent = occupation.range;
-  $("occupationRisk").textContent = occupation.risk;
+  $("occupationGroup").textContent = occupation?.group || "-";
+  $("occupationAnzsco").textContent = occupation?.anzsco || "-";
+  $("occupationAuthority").textContent = occupation?.authority || "-";
+  $("occupationRange").textContent = occupation?.range || "-";
+  $("occupationRisk").textContent = occupation?.risk || "请先选择一个专业/职业方向，页面会再显示对应 ANZSCO、评估机构和参考竞争分。";
   renderOccupationSelect();
 
   renderForm();
 
-  $("totalScore").textContent = result.total;
+  document.querySelector(".score-card")?.classList.toggle("is-empty", !ready);
+  document.querySelector(".result-panel")?.classList.toggle("is-empty", !ready);
+  $("totalScore").textContent = ready ? result.total : "—";
   $("statusBadge").className = statusClass;
   $("statusBadge").textContent = statusShort;
   $("statusText").textContent = statusText;
-  $("referenceScore").textContent = occupation.range;
+  $("referenceScore").textContent = occupation?.range || "-";
   $("scoreGap").textContent = gap;
-  $("scoreProgress").style.width = `${Math.min(100, (result.total / 110) * 100)}%`;
-  $("adviceList").innerHTML = buildAdvice(result.total, occupation).map((item) => `<li>${item}</li>`).join("");
-  $("boostList").innerHTML = buildBoostList(result.total, occupation)
-    .map((item) => `<div class="boost-item"><span>${item.label}</span><strong>${item.points > 0 ? `+${item.points}` : "OK"}</strong></div>`)
-    .join("");
+  $("scoreProgress").style.width = ready ? `${Math.min(100, (result.total / 110) * 100)}%` : "0%";
+  $("adviceList").innerHTML = ready
+    ? buildAdvice(result.total, occupation).map((item) => `<li>${item}</li>`).join("")
+    : `<li class="empty-state">选择专业并完成选项后，这里会显示优先提分建议。</li>`;
+  $("boostList").innerHTML = ready
+    ? buildBoostList(result.total, occupation)
+        .map((item) => `<div class="boost-item"><span>${item.label}</span><strong>${item.points > 0 ? `+${item.points}` : "OK"}</strong></div>`)
+        .join("")
+    : `<div class="boost-item boost-item--empty"><span>选择专业和个人情况后，系统会按参考竞争分给出加分方向。</span><strong>-</strong></div>`;
 
   syncPresetButtons();
-  renderBreakdown(result.breakdown);
-  renderVisaChart();
+  renderBreakdown(ready ? result.breakdown : []);
+  renderVisaChart(ready);
   renderOccupationRows();
 }
 
