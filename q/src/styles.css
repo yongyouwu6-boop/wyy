@@ -459,10 +459,32 @@ input {
   align-items: start;
 }
 
+.occupation-panel,
 .form-panel-wide,
+.result-panel,
 .boost-panel,
 .bonus-explain-panel {
   grid-column: 1 / -1;
+}
+
+.occupation-panel {
+  order: 1;
+}
+
+.bonus-explain-panel {
+  order: 2;
+}
+
+.form-panel-wide {
+  order: 3;
+}
+
+.result-panel {
+  order: 4;
+}
+
+.boost-panel {
+  order: 5;
 }
 
 .panel {
@@ -809,6 +831,24 @@ input {
   font-weight: 700;
 }
 
+.empty-state {
+  border: 1px dashed rgba(100, 116, 139, 0.32) !important;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.68) !important;
+  color: #64748b !important;
+  padding: 12px;
+  font-weight: 800;
+}
+
+.score-card.is-empty .score-card__number,
+.result-panel.is-empty .result-panel__score {
+  color: #94a3b8;
+}
+
+.result-panel.is-empty .progress span {
+  width: 0 !important;
+}
+
 .boost-list,
 .bonus-explain-grid,
 .charts-grid,
@@ -844,6 +884,17 @@ input {
   color: #fff;
   padding: 5px 8px;
   font-size: 0.78rem;
+}
+
+.boost-item--empty {
+  border-style: dashed;
+  background: rgba(248, 250, 252, 0.7);
+  color: #64748b;
+}
+
+.boost-item--empty strong {
+  background: #cbd5e1;
+  color: #334155;
 }
 
 .bonus-explain-grid {
@@ -1190,10 +1241,6 @@ td button.link-button {
   .pathway-grid,
   .trend-grid {
     grid-template-columns: 1fr;
-  }
-
-  .result-panel {
-    order: 2;
   }
 
   .form-panel-wide,
