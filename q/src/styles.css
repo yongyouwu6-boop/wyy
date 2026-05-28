@@ -551,8 +551,7 @@ input {
 }
 
 .picker-toolbar > span,
-.search-box span,
-.choice-field legend {
+.search-box span {
   font-size: 0.85rem;
   font-weight: 850;
 }
@@ -700,10 +699,10 @@ input {
 .choice-field {
   min-width: 0;
   border: 1px solid rgba(19, 34, 56, 0.08);
-  border-radius: 16px;
-  background: rgba(248, 250, 252, 0.64);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.86), rgba(255, 255, 255, 0.72));
   margin: 0;
-  padding: 14px;
+  padding: 16px;
 }
 
 .choice-field--wide {
@@ -711,8 +710,28 @@ input {
 }
 
 .choice-field legend {
-  margin-bottom: 8px;
+  float: left;
+  width: 100%;
+  margin: 0 0 13px;
   padding: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.choice-field legend::after {
+  display: block;
+  width: 34px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--mint));
+  margin-top: 8px;
+  content: "";
+}
+
+.choice-field legend + .choice-grid {
+  clear: both;
 }
 
 .choice-grid {
