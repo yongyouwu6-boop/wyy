@@ -191,6 +191,57 @@
             </div>
             <div id="boostList" class="boost-list"></div>
           </section>
+
+          <section class="panel planning-panel">
+            <div class="panel__header">
+              <div>
+                <h3>Next step planner / 下一步规划工具</h3>
+                <p>设置目标分、换算英语成绩，并生成一段可以复制分享的个人分数报告。</p>
+              </div>
+              <span class="pill">Report / 分享摘要</span>
+            </div>
+            <div class="planner-grid">
+              <div class="planner-card">
+                <label class="planner-label" for="targetScore">Target score / 目标分</label>
+                <select id="targetScore" class="planner-select">
+                  <option value="75">75</option>
+                  <option value="80">80</option>
+                  <option value="85">85</option>
+                  <option value="90" selected>90</option>
+                  <option value="95">95</option>
+                  <option value="100">100</option>
+                </select>
+                <div id="targetPlan" class="planner-result"></div>
+              </div>
+
+              <div class="planner-card">
+                <div class="planner-card__top">
+                  <label class="planner-label" for="englishTestType">English converter / 英语换算</label>
+                  <select id="englishTestType" class="planner-select planner-select--small">
+                    <option value="pte">PTE</option>
+                    <option value="ielts">IELTS</option>
+                  </select>
+                </div>
+                <div class="score-input-grid">
+                  <label>L<input id="englishListening" type="number" inputmode="decimal" placeholder="L" /></label>
+                  <label>R<input id="englishReading" type="number" inputmode="decimal" placeholder="R" /></label>
+                  <label>W<input id="englishWriting" type="number" inputmode="decimal" placeholder="W" /></label>
+                  <label>S<input id="englishSpeaking" type="number" inputmode="decimal" placeholder="S" /></label>
+                </div>
+                <div id="englishConverterResult" class="planner-result"></div>
+                <button id="applyEnglishLevel" class="button button--small" type="button" disabled>Apply to profile / 应用到英语选项</button>
+              </div>
+
+              <div class="planner-card planner-card--report">
+                <div class="planner-card__top">
+                  <span class="planner-label">Personal report / 个人报告</span>
+                  <button id="copyReport" class="button button--small" type="button">Copy / 复制</button>
+                </div>
+                <textarea id="personalReport" class="report-box" readonly placeholder="完成专业和自身情况选择后，这里会生成报告。"></textarea>
+                <p id="copyStatus" class="copy-status"></p>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div class="charts-grid">
