@@ -1,4 +1,4 @@
-const STORAGE_KEY = "australia-pr-score-profile-static-v3";
+const STORAGE_KEY = "australia-pr-score-profile-static-v4";
 let activeOccupationGroup = "All";
 
 const DATA = {
@@ -678,11 +678,7 @@ function buildAdvice(total, occupation) {
   return [...new Set(items)].slice(0, 5);
 }
 
-function buildBoostList(total, occupation) {
-  if (total >= occupation.targetMin) {
-    return [{ label: "Your score is already at or above the reference floor / 当前已达到或超过参考下限", points: 0 }];
-  }
-
+function getBoostCandidates() {
   const boosts = [];
   if (profile.english === "competent") boosts.push({ label: "English to Proficient / 英语提升到 Proficient", points: 10 });
   if (profile.english !== "superior") boosts.push({ label: "English to Superior / 英语提升到 Superior", points: profile.english === "competent" ? 20 : 10 });
@@ -694,7 +690,127 @@ function buildBoostList(total, occupation) {
   if (profile.australianWork === "0") boosts.push({ label: "1 year Australian skilled work / 1 年澳洲技术工作", points: 5 });
   if (profile.specialistEducation === "no") boosts.push({ label: "Eligible STEM research degree / 符合条件的 STEM 研究型学历", points: 10 });
 
-  return boosts.slice(0, 7);
+  return boosts;
+}
+
+function buildBoostList(total, occupation) {
+  if (total >= occupation.targetMin) {
+    return [{ label: "Your score is already at or above the reference floor / 当前已达到或超过参考下限", points: 0 }];
+  }
+
+  return getBoostCandidates().slice(0, 7);
+}
+
+function getTargetScore(occupation) {
+  const selected = Number($("targetScore")?.value || 0);
+  return selected || occupation?.targetMin || 90;
+}
+
+function renderTargetPlanner(result, occupation, ready) {
+  if (!$("targetPlan")) return;
+  if (!ready) {
+    $("targetPlan").innerHTML = `<div class="empty-state">完成专业和自身情况后，这里会倒推你距离目标分还差多少。</div>`;
+    return;
+  }
+
+  const target = getTargetScore(occupation);
+  const gap = Math.max(0, target - result.total);
+  if (gap === 0) {
+    $("targetPlan").innerHTML = `<strong>Current score ${result.total} / 当前 ${result.total} 分</strong><br>已经达到 ${target} 分目标。下一步重点看职业评估、州担保窗口和材料质量。`;
+    return;
+  }
+
+  let remaining = gap;
+  const route = [];
+  getBoostCandidates()
+    .sort((a, b) => b.points - a.points)
+    .forEach((item) => {
+      if (remaining > 0 && item.points > 0) {
+        route.push(item);
+        remaining -= item.points;
+      }
+    });
+
+  $("targetPlan").innerHTML = `
+    <strong>Current ${result.total}, target ${target} / 当前 ${result.total}，目标 ${target}</strong><br>
+    Gap / 还差：<strong>${gap}</strong> points
+    ${
+      route.length
+        ? `<ul>${route
+            .slice(0, 4)
+            .map((item) => `<li>${item.label} <strong>+${item.points}</strong></li>`)
+            .join("")}</ul>`
+        : `<div class="empty-state">当前可直接模拟的加分项不多，建议重点看职业评估、州担保和雇主担保路径。</div>`
+    }
+  `;
+}
+
+function getEnglishThresholds(testType) {
+  if (testType === "ielts") {
+    return [
+      { level: "superior", label: "Superior English / 优秀英语", points: 20, values: [8, 8, 8, 8] },
+      { level: "proficient", label: "Proficient English / 熟练英语", points: 10, values: [7, 7, 7, 7] },
+      { level: "competent", label: "Competent English / 合格英语", points: 0, values: [6, 6, 6, 6] }
+    ];
+  }
+
+  return [
+    { level: "superior", label: "Superior English / 优秀英语", points: 20, values: [69, 70, 85, 88] },
+    { level: "proficient", label: "Proficient English / 熟练英语", points: 10, values: [58, 59, 69, 76] },
+    { level: "competent", label: "Competent English / 合格英语", points: 0, values: [47, 48, 51, 54] }
+  ];
+}
+
+function renderEnglishConverter() {
+  if (!$("englishConverterResult")) return;
+  const testType = $("englishTestType").value;
+  const scores = ["englishListening", "englishReading", "englishWriting", "englishSpeaking"].map((id) => Number($(id).value));
+  const applyButton = $("applyEnglishLevel");
+
+  if (scores.some((score) => Number.isNaN(score) || score <= 0)) {
+    $("englishConverterResult").innerHTML = `<div class="empty-state">输入听说读写四项分数后，会自动判断对应的移民英语等级。</div>`;
+    applyButton.disabled = true;
+    applyButton.dataset.level = "";
+    return;
+  }
+
+  const matched = getEnglishThresholds(testType).find((threshold) => scores.every((score, index) => score >= threshold.values[index]));
+  if (!matched) {
+    $("englishConverterResult").innerHTML = `<strong>Below Competent / 暂未达到合格英语</strong><br>当前分数不能在 EOI 中获得英语等级认可。`;
+    applyButton.disabled = true;
+    applyButton.dataset.level = "";
+    return;
+  }
+
+  $("englishConverterResult").innerHTML = `<strong>${matched.label}</strong><br>EOI English points / 英语加分：<strong>${matched.points}</strong> pts`;
+  applyButton.disabled = false;
+  applyButton.dataset.level = matched.level;
+}
+
+function getProfileLabel(categoryId) {
+  const category = DATA.categories.find((item) => item.id === categoryId);
+  return getOption(category, profile[categoryId])?.label || "-";
+}
+
+function buildPersonalReport(result, occupation, ready, statusText) {
+  if (!ready) return "";
+  const gap = Math.max(0, occupation.targetMin - result.total);
+  const advice = buildAdvice(result.total, occupation).map((item) => `- ${item}`).join("\n");
+  return [
+    "我的澳洲技术移民 EOI 规划报告",
+    `职业方向：${occupation.title} / ${occupation.titleZh}`,
+    `ANZSCO：${occupation.anzsco}`,
+    `评估机构：${occupation.authority}`,
+    `当前 EOI 分数：${result.total}`,
+    `职业参考竞争分：${occupation.range}`,
+    `距离参考下限：${gap} 分`,
+    `目标签证：${getProfileLabel("visaSubclass")}`,
+    `英语等级：${getProfileLabel("english")}`,
+    `学历：${getProfileLabel("education")}`,
+    `判断：${statusText}`,
+    "优先提分建议：",
+    advice || "- 当前分数已接近参考区间，下一步重点检查职业评估和申请材料。"
+  ].join("\n");
 }
 
 function renderSources() {
@@ -1079,6 +1195,10 @@ function render() {
         .map((item) => `<div class="boost-item"><span>${item.label}</span><strong>${item.points > 0 ? `+${item.points}` : "OK"}</strong></div>`)
         .join("")
     : `<div class="boost-item boost-item--empty"><span>选择专业和个人情况后，系统会按参考竞争分给出加分方向。</span><strong>-</strong></div>`;
+  renderTargetPlanner(result, occupation, ready);
+  renderEnglishConverter();
+  $("personalReport").value = buildPersonalReport(result, occupation, ready, statusText);
+  $("copyReport").disabled = !ready;
 
   syncPresetButtons();
   renderBreakdown(ready ? result.breakdown : []);
@@ -1088,6 +1208,35 @@ function render() {
 
 function bindEvents() {
   $("occupationSearch").addEventListener("input", renderOccupationRows);
+  $("targetScore").addEventListener("change", render);
+  $("englishTestType").addEventListener("change", renderEnglishConverter);
+  ["englishListening", "englishReading", "englishWriting", "englishSpeaking"].forEach((id) => {
+    $(id).addEventListener("input", renderEnglishConverter);
+  });
+
+  $("applyEnglishLevel").addEventListener("click", () => {
+    const level = $("applyEnglishLevel").dataset.level;
+    if (!level) return;
+    profile.english = level;
+    saveProfile();
+    render();
+  });
+
+  $("copyReport").addEventListener("click", async () => {
+    const report = $("personalReport").value;
+    if (!report) return;
+    try {
+      await navigator.clipboard.writeText(report);
+      $("copyStatus").textContent = "Copied / 已复制";
+    } catch {
+      $("personalReport").select();
+      document.execCommand("copy");
+      $("copyStatus").textContent = "Copied / 已复制";
+    }
+    window.setTimeout(() => {
+      $("copyStatus").textContent = "";
+    }, 1800);
+  });
 
   $("currentPreset").addEventListener("click", () => {
     profile = { ...DATA.defaultProfile, occupationId: profile.occupationId };
